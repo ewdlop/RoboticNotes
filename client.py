@@ -10,7 +10,7 @@ planeId = p.loadURDF("plane.urdf")
 cubeStartPos = [0,0,1]
 cubeStartOrientation = p.getQuaternionFromEuler([0,0,0])
 #robotId = p.loadURDF("r2d2.urdf",cubeStartPos, cubeStartOrientation)
-robotId = p.loadURDF("test_robot_1.urdf",cubeStartPos, cubeStartOrientation)
+robotId = p.loadURDF("test_robot_2.urdf",cubeStartPos, cubeStartOrientation)
 mode = p.POSITION_CONTROL
 jointIndex = 0 # test different joints, starting at
 for i in range (10000):
