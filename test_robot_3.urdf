@@ -29,6 +29,6 @@
         <child link="arm"/>
         <limit effort="1000.0" lower="-0.38" upper="0" velocity="0.5"/>
         <origin xyz="0.2 0 0.3" rpy="0 0 3.1416"/>
-        <axis xyz="0 0 1"/>
+        <axis xyz="1 0 0"/>
     </joint>
 </robot>
