@@ -6,8 +6,6 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from collections import deque
-import json
-import os
 
 class RobotController:
     def __init__(self):
@@ -25,9 +23,6 @@ class RobotController:
         self.learning_history = []
         self.best_speed = -float('inf')
         self.best_params = None
-        
-        # File for saving/loading parameters
-        self.params_file = "best_robot_params.json"
         
     def setup_simulation(self):
         """Initialize PyBullet simulation environment"""
@@ -208,93 +203,6 @@ class RobotController:
         
         return new_params
     
-    def save_best_params(self):
-        """Save the best parameters to a JSON file"""
-        if self.best_params is None:
-            print("No best parameters to save!")
-            return False
-            
-        try:
-            # Convert joint indices to strings for JSON compatibility
-            params_data = {
-                'best_speed': self.best_speed,
-                'best_params': {str(k): v for k, v in self.best_params.items()},
-                'joint_info': {str(k): v for k, v in self.joint_info.items()},
-                'learning_history': self.learning_history
-            }
-            
-            with open(self.params_file, 'w') as f:
-                json.dump(params_data, f, indent=2)
-            
-            print(f"Best parameters saved to {self.params_file}")
-            print(f"Best speed achieved: {self.best_speed:.4f} m/s")
-            return True
-            
-        except Exception as e:
-            print(f"Error saving parameters: {e}")
-            return False
-    
-    def load_best_params(self):
-        """Load the best parameters from a JSON file"""
-        if not os.path.exists(self.params_file):
-            print(f"No saved parameters found at {self.params_file}")
-            return False
-            
-        try:
-            with open(self.params_file, 'r') as f:
-                params_data = json.load(f)
-            
-            # Convert string keys back to integers
-            self.best_speed = params_data['best_speed']
-            self.best_params = {int(k): v for k, v in params_data['best_params'].items()}
-            self.learning_history = params_data.get('learning_history', [])
-            
-            print(f"Best parameters loaded from {self.params_file}")
-            print(f"Loaded best speed: {self.best_speed:.4f} m/s")
-            
-            # Verify that loaded joints match current robot
-            if self.joint_info:
-                loaded_joints = set(self.best_params.keys())
-                current_joints = set(self.controllable_joints)
-                
-                if loaded_joints != current_joints:
-                    print("Warning: Loaded parameters don't match current robot joints!")
-                    print(f"Loaded joints: {loaded_joints}")
-                    print(f"Current joints: {current_joints}")
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            print(f"Error loading parameters: {e}")
-            return False
-    
-    def print_saved_params_info(self):
-        """Print information about saved parameters without loading them"""
-        if not os.path.exists(self.params_file):
-            print(f"No saved parameters found at {self.params_file}")
-            return
-            
-        try:
-            with open(self.params_file, 'r') as f:
-                params_data = json.load(f)
-            
-            print(f"\nSaved Parameters Info:")
-            print(f"  File: {self.params_file}")
-            print(f"  Best Speed: {params_data['best_speed']:.4f} m/s")
-            print(f"  Number of joints: {len(params_data['best_params'])}")
-            print(f"  Learning history length: {len(params_data.get('learning_history', []))}")
-            
-            if 'best_params' in params_data:
-                print("  Joint parameters:")
-                joint_info = params_data.get('joint_info', {})
-                for joint_idx_str, params in params_data['best_params'].items():
-                    joint_name = joint_info.get(joint_idx_str, {}).get('name', f'Joint_{joint_idx_str}')
-                    print(f"    {joint_name}: offset={params[0]:.3f}, amp={params[1]:.3f}, phase={params[2]:.3f}")
-                    
-        except Exception as e:
-            print(f"Error reading saved parameters: {e}")
-    
     def hill_climber_optimization(self, generations=50):
         """Optimize locomotion parameters using hill climbing"""
         print(f"\nStarting hill climber optimization for {generations} generations...")
@@ -333,9 +241,6 @@ class RobotController:
         
         print(f"\nOptimization complete!")
         print(f"Best fitness achieved: {self.best_speed:.4f}")
-        
-        # Automatically save the best parameters
-        self.save_best_params()
         
         return self.best_params
     
@@ -426,56 +331,20 @@ def main():
         print("No controllable joints found!")
         return
     
-    # Check for saved parameters
-    controller.print_saved_params_info()
-    
-    print("\nChoose option:")
-    print("1. Run new optimization")
-    print("2. Load saved parameters and demonstrate")
-    print("3. Load saved parameters and continue optimization")
+    print("Optimizing for forward locomotion...")
     
     try:
-        choice = input("Enter choice (1, 2, or 3): ").strip()
+        # Run optimization
+        generations = 30  # Adjust as needed
+        best_params = controller.hill_climber_optimization(generations=generations)
         
-        if choice == "2":
-            # Load and demonstrate
-            if controller.load_best_params():
-                print("Demonstrating loaded parameters...")
-                controller.demonstrate_best_params(duration=15.0)
-            else:
-                print("Failed to load parameters. Running new optimization instead.")
-                choice = "1"
+        # Plot learning curve
+        controller.plot_learning_curve()
         
-        elif choice == "3":
-            # Load and continue optimization
-            if controller.load_best_params():
-                print("Continuing optimization from loaded parameters...")
-                # Set current params to loaded params
-                controller.locomotion_params = controller.best_params.copy()
-                generations = int(input("Enter number of additional generations (default 20): ") or "20")
-                controller.hill_climber_optimization(generations=generations)
-                controller.plot_learning_curve()
-                
-                print(f"\nPress Enter to see demonstration of optimized robot...")
-                input()
-                controller.demonstrate_best_params(duration=15.0)
-            else:
-                print("Failed to load parameters. Running new optimization instead.")
-                choice = "1"
-        
-        if choice == "1":
-            # Run new optimization
-            print("Starting new optimization for forward locomotion...")
-            generations = int(input("Enter number of generations (default 30): ") or "30")
-            best_params = controller.hill_climber_optimization(generations=generations)
-            
-            # Plot learning curve
-            controller.plot_learning_curve()
-            
-            # Demonstrate best solution
-            print(f"\nPress Enter to see demonstration of optimized robot...")
-            input()
-            controller.demonstrate_best_params(duration=15.0)
+        # Demonstrate best solution
+        print(f"\nPress Enter to see demonstration of optimized robot...")
+        input()
+        controller.demonstrate_best_params(duration=15.0)
         
     except KeyboardInterrupt:
         print("\nStopped by user")
