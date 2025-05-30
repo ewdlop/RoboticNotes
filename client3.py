@@ -33,8 +33,8 @@ def load_robot():
     except Exception as e:
         print(f"Failed to load MJCF: {e}")
         # Fallback to a built-in humanoid robot
-        robotId = p.loadURDF("humanoid/humanoid.urdf")
-        print("Loaded humanoid.urdf as fallback")
+        robotId = p.loadURDF("r2d2.urdf")
+        print("Loaded r2d2.urdf as fallback")
         return robotId
 
 def analyze_joints(robotId):
