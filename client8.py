@@ -558,10 +558,10 @@ class RobotController:
         initial_pos, _ = p.getBasePositionAndOrientation(self.robotId)
         
         # Run simulation
-        steps = int(duration * 240)  # 240 Hz
+        steps = int(duration * 120)  # 240 Hz
         
         for step in range(steps):
-            time_factor = step * (1.0 / 240.0)
+            time_factor = step * (1.0 / 120.0)
             
             # Apply motion to each joint
             for joint_idx in self.controllable_joints:
@@ -586,7 +586,7 @@ class RobotController:
                 )
             
             p.stepSimulation()
-            time.sleep(1.0 / 240.0)
+            time.sleep(1.0 / 120.0)
         
         # Calculate fitness (distance traveled / time = speed)
         final_pos, _ = p.getBasePositionAndOrientation(self.robotId)
